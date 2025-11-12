@@ -1,0 +1,32 @@
+// cmd/queue.go
+package cmd
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/google/uuid"
+	"github.com/shashidhxr/queueCTL/pkg/models"
+	"github.com/spf13/cobra"
+)
+
+var enqueueCmd = &cobra.Command{
+	Use:   "enqueue [command]",
+	Short: "Enqueue a job",
+	Args:  cobra.MinimumNArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		j := &models.Job{
+			ID:         uuid.NewString(),
+			Command:    args[0],
+			State:      models.StatePending,
+			MaxRetries: 3,
+		}
+		if err := st.SaveJob(context.Background(), j); err != nil {
+			return err
+		}
+		fmt.Printf("Enqueued: %+v\n", *j)
+		return nil
+	},
+}
+
+func init() { rootCmd.AddCommand(enqueueCmd) }
