@@ -274,10 +274,10 @@ func nullableTime(t *time.Time) any {
 
 // helpers
 
-func (s *SQLiteStorage) SetCompleted(ctx context.Context, id string) error {
-	_, err := s.db.ExecContext(ctx, `UPDATE jobs SET state='completed', updated_at=CURRENT_TIMESTAMP WHERE id=?`, id)
-	return err
-}
+// func (s *SQLiteStorage) SetCompleted(ctx context.Context, id string) error {
+// 	_, err := s.db.ExecContext(ctx, `UPDATE jobs SET state='completed', updated_at=CURRENT_TIMESTAMP WHERE id=?`, id)
+// 	return err
+// }
 
 func (s *SQLiteStorage) SetFailedOrRetry(ctx context.Context, j *models.Job, backoffBase int) error {
 	j.Attempts++
@@ -294,5 +294,50 @@ func (s *SQLiteStorage) SetFailedOrRetry(ctx context.Context, j *models.Job, bac
 UPDATE jobs
 SET state='pending', attempts=?, next_retry=?, error=NULL, updated_at=CURRENT_TIMESTAMP
 WHERE id=?`, j.Attempts, next, j.ID)
+	return err
+}
+
+// Mark job completed
+func (s *SQLiteStorage) SetCompleted(ctx context.Context, id string) error {
+	_, err := s.db.ExecContext(ctx,
+		`UPDATE jobs SET state='completed', updated_at=CURRENT_TIMESTAMP WHERE id=?`, id)
+	return err
+}
+
+// On failure: increment attempts and either schedule a fixed delay or mark dead
+func (s *SQLiteStorage) FailOrScheduleFixed(ctx context.Context, id string, attempts, maxRetries int, fixedDelay time.Duration, errStr string) error {
+	attempts++
+	if attempts > maxRetries {
+		_, err := s.db.ExecContext(ctx, `
+UPDATE jobs
+SET state='dead', attempts=?, error=?, updated_at=CURRENT_TIMESTAMP
+WHERE id=?`, attempts, errStr, id)
+		return err
+	}
+
+	next := time.Now().UTC().Add(fixedDelay)
+	_, err := s.db.ExecContext(ctx, `
+UPDATE jobs
+SET state='pending', attempts=?, next_retry=?, error=?, updated_at=CURRENT_TIMESTAMP
+WHERE id=?`, attempts, next, errStr, id)
+	return err
+}
+
+
+func (s *SQLiteStorage) FailOrScheduleBackoff(ctx context.Context, j *models.Job, delay time.Duration, errStr string) error {
+	j.Attempts++
+	if j.Attempts > j.MaxRetries {
+		_, err := s.db.ExecContext(ctx, `
+UPDATE jobs
+SET state='dead', attempts=?, error=?, updated_at=CURRENT_TIMESTAMP
+WHERE id=?`, j.Attempts, errStr, j.ID)
+		return err
+	}
+
+	next := time.Now().UTC().Add(delay)
+	_, err := s.db.ExecContext(ctx, `
+UPDATE jobs
+SET state='pending', attempts=?, next_retry=?, error=?, updated_at=CURRENT_TIMESTAMP
+WHERE id=?`, j.Attempts, next, errStr, j.ID)
 	return err
 }
