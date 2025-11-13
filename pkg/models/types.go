@@ -22,6 +22,10 @@ type Job struct {
 	UpdatedAt  time.Time `json:"updated_at"`
 	Error      string    `json:"error,omitempty"`
 	NextRetry  *time.Time `json:"next_retry,omitempty"`
+
+	TimeoutSeconds int        `json:"timeout_seconds"`       // per-job hard timeout
+    WorkerID       *string    `json:"worker_id,omitempty"`   // who leased it
+    LeaseUntil     *time.Time `json:"lease_until,omitempty"` // visibility timeout
 }
 
 type Config struct {
