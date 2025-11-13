@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 
 	"github.com/shashidhxr/queueCTL/internal/store"
-
 	"github.com/spf13/cobra"
 )
 

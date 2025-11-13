@@ -23,3 +23,8 @@ type Job struct {
 	Error      string    `json:"error,omitempty"`
 	NextRetry  *time.Time `json:"next_retry,omitempty"`
 }
+
+type Config struct {
+    MaxRetries  int `json:"max_retries"`
+    BackoffBase int `json:"backoff_base"`
+}
