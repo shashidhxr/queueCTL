@@ -4,11 +4,15 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/google/uuid"
 	"github.com/shashidhxr/queueCTL/pkg/models"
 	"github.com/spf13/cobra"
 )
+
+var jobQueue = make([]*models.Job, 0)
+var queueLock sync.Mutex
 
 var enqueueCmd = &cobra.Command{
 	Use:   "enqueue [command]",
