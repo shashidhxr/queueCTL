@@ -12,9 +12,13 @@ var configGetCmd = &cobra.Command{
     Use:   "get",
     Short: "Get all config keys",
     RunE: func(cmd *cobra.Command, args []string) error {
-        m, err := st.GetConfig(context.Background())
-        if err != nil { return err }
-        for k, v := range m { fmt.Printf("%s=%s\n", k, v) }
+        cfg, err := st.GetConfig(context.Background())
+        if err != nil { 
+			return err
+		}
+        // for k, v := range m { fmt.Printf("%s=%s\n", k, v) }
+		fmt.Printf("max_retries=%d\n", cfg.MaxRetries)
+		fmt.Printf("backoff_base=%d\n", cfg.BackoffBase)
         return nil
     },
 }
