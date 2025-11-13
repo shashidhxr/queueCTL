@@ -177,3 +177,5 @@ sqlite3 demo.db "SELECT state, COUNT(*) FROM jobs GROUP BY state;"
 - Job cancellation  
 - Distributed store (Postgres / Redis)  
 
+## License
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
